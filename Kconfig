@@ -1,5 +1,5 @@
 config USR_DRV_FLASH
-  bool  "userspace STM32F4xx SoC internal Flash driver"
+  bool  "userspace Flash driver"
   default y
   ---help---
   Support for STM32F4 internal flash hardware IP.
