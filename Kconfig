@@ -1,0 +1,8 @@
+config USR_DRV_FLASH
+  bool  "userspace STM32F4xx SoC internal Flash driver"
+  default y
+  ---help---
+  Support for STM32F4 internal flash hardware IP.
+config USR_DRV_FLASH_CFLAGS
+  string
+  default " -I../../drivers/socs/stm32f439/flash/api " if USR_DRV_FLASH
