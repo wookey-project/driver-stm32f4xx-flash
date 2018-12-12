@@ -10,10 +10,10 @@
 #include "api/print.h"
 #include "api/regutils.h"
 
-#define FLASH_DEBUG
+#define FLASH_DEBUG 1
 
 /* Primitive for debug output */
-#ifdef FLASH_DEBUG
+#if FLASH_DEBUG
 #define log_printf(...) printf(__VA_ARGS__)
 #else
 #define log_printf(...)
@@ -37,14 +37,10 @@ int flash_device_early_init(void) {
 	dev.irq_num = 0;
 	dev.gpio_num = 0;
 
-#ifdef FLASH_DEBUG
 	log_printf("registering flash driver\n");
-#endif
 	ret = sys_init(INIT_DEVACCESS, &dev, &dev_desc);
 
-#ifdef FLASH_DEBUG
 	printf("sys_init returns %s !\n", strerror(ret));
-#endif
 	if(ret != 0){
 		goto err;
 	}
