@@ -6,3 +6,45 @@ config USR_DRV_FLASH
 config USR_DRV_FLASH_CFLAGS
   string
   default " -I../../drivers/socs/stm32f439/flash/api " if USR_DRV_FLASH
+
+if USR_DRV_FLASH
+
+menu "Flash driver options"
+
+
+choice
+  prompt "Flash size (SoC dependent)"
+  default USR_DRV_FLASH_2UAL_2M if STM32F439
+  default USR_DRV_FLASH_1M
+
+  config USR_DRV_FLASH_1M
+  bool "1Mb Megabyte flash size (in single or dual banking)"
+
+  config USR_DRV_FLASH_2M
+  bool "2MBytes flash size (in dual banking only)"
+  depends on STM32F439
+  select USR_DEV_FLASH_DUAL_BANK
+
+
+endchoice
+
+
+
+choice
+  prompt "Flash banking mode"
+  default USR_DRV_FLASH_DUAL_BANK if STM32F429 || STM32F439
+  default USR_DRV_FLASH_SINGLE_BANK
+
+  config USR_DRV_FLASH_SIGNLE_BANK
+  bool "any STM32F4xx in single bank mode"
+
+  config USR_DRV_FLASH_DUAL_BANK
+  bool "STM32F42x and STM32F43x SoC, with flash dual bank support"
+  depends on STM32F429 || STM32F439
+
+endchoice
+
+endmenu
+
+endif
+

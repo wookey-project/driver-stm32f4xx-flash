@@ -9,6 +9,7 @@
 #include "api/syscall.h"
 #include "api/print.h"
 #include "api/regutils.h"
+#include "flash_regs.h"
 
 #define FLASH_DEBUG 1
 
@@ -105,12 +106,16 @@ void flash_lock_opt(void)
 /**
  * \brief Select the sector to erase
  *
- * @param addr Address pointing to sector
- * @return Sector number to erase
+ * Sector address and size size depends on the configured flash device.
+ * See flash_regs.h for more information about how these macros are defined.
+ *
+ * \param   addr Address pointing to sector
+ *
+ * \return sector number to erase
  */
 uint8_t flash_select_sector(uint32_t *addr)
 {
-	uint8_t sector = 20;
+	uint8_t sector = 255;
 	/* First 8 sectors are the same in single/dual mem config */
 	if ((uint32_t)addr <= FLASH_SECTOR_0_END) {
 		sector = 0;
@@ -136,7 +141,8 @@ uint8_t flash_select_sector(uint32_t *addr)
 	else if ((uint32_t)addr <= FLASH_SECTOR_7_END) {
 		sector = 7;
 	}
-#ifndef DUAL
+# if (USR_DRV_FLASH_1M && !USR_DRV_FLASH_DUAL_BANK) || USR_DRV_FLASH_2M
+    /* 1MB flash in dual banking doesn't have these 4 sectors */
 	else if ((uint32_t)addr <= FLASH_SECTOR_8_END) {
 		sector = 8;
 	}
@@ -149,7 +155,9 @@ uint8_t flash_select_sector(uint32_t *addr)
 	else if ((uint32_t)addr <= FLASH_SECTOR_11_END) {
 		sector = 11;
 	}
-#else
+    /* 1MB flash in single banking finishes here */
+#endif
+# if (USR_DRV_FLASH_1M && USR_DRV_FLASH_DUAL_BANK) || USR_DRV_FLASH_2M
 	else if ((uint32_t)addr <= FLASH_SECTOR_12_END) {
 		sector = 12;
 	}
@@ -174,6 +182,22 @@ uint8_t flash_select_sector(uint32_t *addr)
 	else if ((uint32_t)addr <= FLASH_SECTOR_19_END) {
 		sector = 19;
 	}
+    /* 1MB flash in dual banking finishes here */
+#endif
+# if USR_DRV_FLASH_2M
+	else if ((uint32_t)addr <= FLASH_SECTOR_20_END) {
+		sector = 20;
+	}
+	else if ((uint32_t)addr <= FLASH_SECTOR_21_END) {
+		sector = 21;
+	}
+	else if ((uint32_t)addr <= FLASH_SECTOR_22_END) {
+		sector = 22;
+	}
+	else if ((uint32_t)addr <= FLASH_SECTOR_23_END) {
+		sector = 23;
+	}
+    /* 2MB flash in dual banking finishes here */
 #endif
 	else {
 		log_printf("Error: Wrong address case, can't happen.\n");
@@ -193,7 +217,7 @@ uint8_t flash_select_sector(uint32_t *addr)
  */
 uint8_t flash_sector_erase(uint32_t *addr)
 {
-	uint8_t sector = 20;
+	uint8_t sector = 255;
 	/* Check that we're looking into the flash */
 	assert(IS_IN_FLASH((uint32_t)addr));
 
@@ -237,7 +261,7 @@ void flash_bank_erase(uint8_t bank)
 
 	/* Set MER or MER1 bit accordingly */
 	if (bank) {
-#if !(defined(CONFIG_STM32F439) || defined(CONFIG_STM32F429))      /*  Dual blank only on f42xxx/43xxx */
+#if !(defined(CONFIG_USR_DRV_FLASH_DUAL_BANK)) /*  Dual blank only on f42xxx/43xxx */
 		log_printf("Can't acess bank 2 on a single bank memory!\n");
 		while(1){};
 #else
@@ -267,7 +291,7 @@ void flash_mass_erase(void)
 
 	/* Set MER and MER1 bit */
 	set_reg(r_CORTEX_M_FLASH_CR, 1, FLASH_CR_MER);
-#if defined(CONFIG_STM32F439) || defined(CONFIG_STM32F429)      /*  Dual blank only on f42xxx/43xxx */
+#if defined(CONFIG_USR_DRV_FLASH_DUAL_BANK) /*  Dual blank only on f42xxx/43xxx */
 	set_reg(r_CORTEX_M_FLASH_CR, 1, FLASH_CR_MER1);
 #endif
 	/* Set STRT bit in FLASH_CR reg */
@@ -388,10 +412,13 @@ uint8_t flash_get_bank_conf(void)
  */
 void flash_set_bank_conf(uint8_t conf)
 {
+#if CONFIG_USR_DRV_FLASH_1M
 	if (conf){
 		conf = 1;
 	}
 	set_reg(r_CORTEX_M_FLASH_OPTCR, conf, FLASH_OPTCR_DB1M);
+#endif
+    /* with 2Mbytes flash mode, only dual bank mode is supported */
 }
 #endif
 
@@ -445,6 +472,8 @@ uint32_t flash_sector_size(uint8_t sector)
 			return FLASH_SECTOR_SIZE(6);
 		case 7:
 			return FLASH_SECTOR_SIZE(7);
+# if (USR_DRV_FLASH_1M && !USR_DRV_FLASH_DUAL_BANK) || USR_DRV_FLASH_2M
+    /* 1MB flash in dual banking doesn't have these 4 sectors */
 		case 8:
 			return FLASH_SECTOR_SIZE(8);
 		case 9:
@@ -453,6 +482,8 @@ uint32_t flash_sector_size(uint8_t sector)
 			return FLASH_SECTOR_SIZE(10);
 		case 11:
 			return FLASH_SECTOR_SIZE(11);
+#endif
+#if (USR_DRV_FLASH_1M && USR_DRV_FLASH_DUAL_BANK) || USR_DRV_FLASH_2M
 		case 12:
 			return FLASH_SECTOR_SIZE(12);
 		case 13:
@@ -469,6 +500,19 @@ uint32_t flash_sector_size(uint8_t sector)
 			return FLASH_SECTOR_SIZE(18);
 		case 19:
 			return FLASH_SECTOR_SIZE(19);
+    /* 1MB flash in dual banking finishes here */
+#endif
+# if USR_DRV_FLASH_2M
+		case 20:
+			return FLASH_SECTOR_SIZE(20);
+		case 21:
+			return FLASH_SECTOR_SIZE(21);
+		case 22:
+			return FLASH_SECTOR_SIZE(22);
+		case 23:
+			return FLASH_SECTOR_SIZE(23);
+    /*2MB flash in dual banking finishes here */
+#endif
 		default:
 			log_printf("[Flash] Error: bad sector %d\n", sector);
 			return 0;
