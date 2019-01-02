@@ -24,7 +24,32 @@
 #define assert(val) if (!(val)) { log_printf("bkpt"); while(1){}; }; 
 #endif
 
-
+/* the flash device is mapped in a discretional memory layout:
+ * - the flash memory
+ *     -> from 0x08000000 to 0x08010000 or 0x08020000 for 2M flash
+ * - the flash control register interface
+ *     -> from 0x40023C00 to 0x40023FFF
+ * - the flash system memory (holding the RO ST bootloader)
+ *     -> from 0x1FFF000 to 0x1FFF77FF
+ * - the flash One Time Programmable (OTP) region
+ *     -> from 0x1FFF7800 to 0x1FFF7A0F
+ * - The Bank 1 option bytes
+ *     -> from 0x1FFFC000 to 1FFFC00F
+ * - the Bank 2 option bytes
+ *     -> from 0x1FFEC000 to 1FFEC00F
+ *
+ *  All these areasare not mapped continuously and request independent
+ *  device mapping.
+ *  As a consequence, and because it is not possible to map such a number of
+ *  device, all devices are mapped VOLUNTARY, and are dynamically mapped/unmapped
+ *  as needed by this driver.
+ *
+ *  At init time, the upper layer specify which device in the above list
+ *  is requested to be declared. This permit to declare only the required one, avoiding
+ *  the mapping of devices like the OTP area, which is not always needed, depending
+ *  on the upper layer needs.
+ *
+ */
 /* Register the flash device with the kernel */
 int flash_device_early_init(void) {
 	const char *name = "flash";
@@ -33,6 +58,7 @@ int flash_device_early_init(void) {
 	device_t dev = { 0 };
 	int      dev_desc = 0;
 	strncpy(dev.name, name, sizeof (dev.name));
+
 
 	dev.map_mode = DEV_MAP_AUTO;
 	dev.irq_num = 0;
@@ -400,7 +426,12 @@ void flash_read(uint8_t *buffer, uint32_t *addr, uint32_t size)
  */
 uint8_t flash_get_bank_conf(void)
 {
+#if CONFIG_USR_DRV_FLASH_1M
 	return get_reg(r_CORTEX_M_FLASH_OPTCR, FLASH_OPTCR_DB1M) == 0 ? 0 : 1;
+#else
+    /* always in dual bank in 2M mode */
+    return 1;
+#endif
 }
 
 /**
