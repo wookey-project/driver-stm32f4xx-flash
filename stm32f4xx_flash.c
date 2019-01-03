@@ -50,29 +50,169 @@
  *  on the upper layer needs.
  *
  */
+
+static int flash_device_desc_tab[] = {
+#if CONFIG_WOOKEY
+    0, 0, 0, 0,
+#else
+# if CONFIG_USR_DRV_FLASH_DUAL_BANK
+    0, 0,
+# else
+    0,
+# endif
+#endif
+    0, 0, 0, 0,
+#if CONFIG_USR_DRV_FLASH_DUAL_BANK
+    0,
+#endif
+};
+
+/* to .rodata: */
+static const device_t flash_device_tab[] = {
+#if CONFIG_WOOKEY
+    {"flash_flip_shr", 0x08010000, 0x10000,  0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
+    {"flash_flip",     0x08000000, 0x100000, 0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
+    {"flash_flop_shr", 0x08110000, 0x10000,  0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
+    {"flash_flop",     0x08100000, 0x100000, 0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
+#else
+# if CONFIG_USR_DRV_FLASH_DUAL_BANK
+#  if CONFIG_USR_DRV_FLASH_2M
+    {"flash_bank1",     0x08000000, 0x100000, 0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
+    {"flash_bank2",     0x08100000, 0x100000, 0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
+#  else
+    {"flash_bank1",     0x08000000, 0x80000, 0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
+    {"flash_bank2",     0x08080000, 0x80000, 0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
+#  endif
+# else
+    {"flash_mem",       0x08000000, 0x100000, 0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
+# endif
+#endif
+    {"flash_ctrl",      0x40023C00,    0x400, 0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
+    {"flash_system",    0x1FFF0000,   0x7800, 0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
+    {"flash_otp",       0x1FFF7800,    0x400, 0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
+    {"flash_opb_bk1",   0x1FFFC000,     0x20, 0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
+#if CONFIG_USR_DRV_FLASH_DUAL_BANK
+    {"flash_opb_bk2",   0x1FFEC000,     0x20, 0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
+#endif
+};
+
 /* Register the flash device with the kernel */
-int flash_device_early_init(void) {
-	const char *name = "flash";
+int flash_device_early_init(t_device_mapping *devmap)
+{
 	e_syscall_ret ret = 0;	
 
-	device_t dev = { 0 };
-	int      dev_desc = 0;
-	strncpy(dev.name, name, sizeof (dev.name));
+    if (!devmap) {
+        return -1;
+    }
+#ifdef CONFIG_WOOKEY
+    if (devmap->map_flip_shr) {
+        printf("registering %s\n", flash_device_tab[FLIP_SHR].name);
+        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[FLIP_SHR],
+                                       &flash_device_desc_tab[FLIP_SHR]);
+        if (ret != SYS_E_DONE) {
+            goto err;
+        }
+    }
+    if (devmap->map_flip) {
+        printf("registering %s\n", flash_device_tab[FLIP].name);
+        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[FLIP],
+                                       &flash_device_desc_tab[FLIP]);
+        if (ret != SYS_E_DONE) {
+            goto err;
+        }
+    }
+    if (devmap->map_flop_shr) {
+        printf("registering %s\n", flash_device_tab[FLOP_SHR].name);
+        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[FLOP_SHR],
+                                       &flash_device_desc_tab[FLOP_SHR]);
+        if (ret != SYS_E_DONE) {
+            goto err;
+        }
+    }
+    if (devmap->map_flop) {
+        printf("registering %s\n", flash_device_tab[FLOP].name);
+        ret = sys_init(INIT_DEVACCESS, (device_t*)&(flash_device_tab[FLOP]),
+                                       &flash_device_desc_tab[FLOP]);
+        if (ret != SYS_E_DONE) {
+            goto err;
+        }
+    }
+#else
+# if CONFIG_USR_DRV_FLASH_DUAL_BANK
+    if (devmap->map_bank1) {
+        printf("registering %s\n", flash_device_tab[BANK1].name);
+        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[BANK1],
+                                       &flash_device_desc_tab[BANK1]);
+        if (ret != SYS_E_DONE) {
+            goto err;
+        }
+    }
+    if (devmap->map_bank2) {
+        printf("registering %s\n", flash_device_tab[BANK2].name);
+        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[BANK2],
+                                       &flash_device_desc_tab[BANK2]);
+        if (ret != SYS_E_DONE) {
+            goto err;
+        }
+    }
+# else
+    if (devmap->map_mem) {
+        printf("registering %s\n", flash_device_tab[MEM].name);
+        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[MEM],
+                                       &flash_device_desc_tab[MEM]);
+        if (ret != SYS_E_DONE) {
+            goto err;
+        }
+    }
+# endif
+#endif
+    if (devmap->map_ctrl) {
+        printf("registering %s\n", flash_device_tab[CTRL].name);
+        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[CTRL],
+                                       &flash_device_desc_tab[CTRL]);
+        if (ret != SYS_E_DONE) {
+            goto err;
+        }
+    }
+    if (devmap->map_system) {
+        printf("registering %s\n", flash_device_tab[SYSTEM].name);
+        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[SYSTEM],
+                                       &flash_device_desc_tab[SYSTEM]);
+        if (ret != SYS_E_DONE) {
+            goto err;
+        }
+    }
+    if (devmap->map_otp) {
+        printf("registering %s\n", flash_device_tab[OTP].name);
+        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[OTP],
+                                       &flash_device_desc_tab[OTP]);
+        if (ret != SYS_E_DONE) {
+            goto err;
+        }
+    }
+    if (devmap->map_opt_bank1) {
+        printf("registering %s\n", flash_device_tab[OPT_BANK1].name);
+        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[OPT_BANK1],
+                                       &flash_device_desc_tab[OPT_BANK1]);
+        if (ret != SYS_E_DONE) {
+            goto err;
+        }
+    }
+#if CONFIG_USR_DRV_LASH_DUAL_BANK
+    if (devmap->map_opt_bank2) {
+        printf("registering %s\n", flash_device_tab[OPT_BANK2].name);
+        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[OPT_BANK2],
+                                       &flash_device_desc_tab[OPT_BANK2]);
+        if (ret != SYS_E_DONE) {
+            goto err;
+        }
+    }
+#endif
+	log_printf("registering flash driver done.\n");
 
-
-	dev.map_mode = DEV_MAP_AUTO;
-	dev.irq_num = 0;
-	dev.gpio_num = 0;
-
-	log_printf("registering flash driver\n");
-	ret = sys_init(INIT_DEVACCESS, &dev, &dev_desc);
-
-	printf("sys_init returns %s !\n", strerror(ret));
-	if(ret != 0){
-		goto err;
-	}
 	return 0;
 err:
+	log_printf("error during device registration !\n");
 	return -1;
 }
 
@@ -598,3 +738,15 @@ void flash_copy_sector(uint32_t *dest, uint32_t *src)
 	log_printf("End of copy\n");
 }
 
+
+int flash_get_descriptor(t_flash_dev_id id)
+{
+#if CONFIG_USR_DRV_LASH_DUAL_BANK
+    if (id <= OPT_BANK2) {
+#else
+    if (id <= OPT_BANK1) {
+#endif
+        return flash_device_desc_tab[id];
+    }
+    return 0;
+}
