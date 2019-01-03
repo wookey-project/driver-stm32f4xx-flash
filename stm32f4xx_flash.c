@@ -198,7 +198,7 @@ int flash_device_early_init(t_device_mapping *devmap)
             goto err;
         }
     }
-#if CONFIG_USR_DRV_LASH_DUAL_BANK
+#if CONFIG_USR_DRV_FLASH_DUAL_BANK
     if (devmap->map_opt_bank2) {
         printf("registering %s\n", flash_device_tab[OPT_BANK2].name);
         ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[OPT_BANK2],
@@ -741,7 +741,7 @@ void flash_copy_sector(uint32_t *dest, uint32_t *src)
 
 int flash_get_descriptor(t_flash_dev_id id)
 {
-#if CONFIG_USR_DRV_LASH_DUAL_BANK
+#if CONFIG_USR_DRV_FLASH_DUAL_BANK
     if (id <= OPT_BANK2) {
 #else
     if (id <= OPT_BANK1) {

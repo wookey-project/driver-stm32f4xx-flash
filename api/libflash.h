@@ -29,7 +29,7 @@ typedef enum {
     SYSTEM,
     OTP,
     OPT_BANK1,
-#if CONFIG_USR_DRV_LASH_DUAL_BANK
+#if CONFIG_USR_DRV_FLASH_DUAL_BANK
     OPT_BANK2,
 #endif
 } t_flash_dev_id;
@@ -60,7 +60,7 @@ typedef struct {
     bool map_system;
     bool map_otp;
     bool map_opt_bank1;
-#if CONFIG_USR_DRV_LASH_DUAL_BANK
+#if CONFIG_USR_DRV_FLASH_DUAL_BANK
     bool map_opt_bank2;
 #endif
 } t_device_mapping;
