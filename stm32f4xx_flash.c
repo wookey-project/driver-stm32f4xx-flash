@@ -217,7 +217,7 @@ err:
 }
 
 static inline int flash_is_busy(void){
-	return !!(read_reg_value(r_CORTEX_M_FLASH_CR + FLASH_SR_BSY));
+	return !!(read_reg_value(r_CORTEX_M_FLASH_SR) & FLASH_SR_BSY);
 }
 
 static inline void flash_busy_wait(void){
@@ -269,6 +269,54 @@ void flash_lock_opt(void)
 	set_reg(r_CORTEX_M_FLASH_OPTCR, 1, FLASH_OPTCR_OPTLOCK); /* Same as previously */
 }
 
+static bool is_sector_start(physaddr_t addr)
+{
+    printf("checking address %x\n", addr);
+    switch (addr) {
+
+        case FLASH_SECTOR_0:
+        case FLASH_SECTOR_1:
+        case FLASH_SECTOR_2:
+        case FLASH_SECTOR_3:
+        case FLASH_SECTOR_4:
+        case FLASH_SECTOR_5:
+        case FLASH_SECTOR_6:
+        case FLASH_SECTOR_7:
+# if (CONFIG_USR_DRV_FLASH_1M && !CONFIG_USR_DRV_FLASH_DUAL_BANK) || CONFIG_USR_DRV_FLASH_2M
+    /* 1MB flash in dual banking doesn't have these 4 sectors */
+        case FLASH_SECTOR_8:
+        case FLASH_SECTOR_9:
+        case FLASH_SECTOR_10:
+        case FLASH_SECTOR_11:
+    /* 1MB flash in single banking finishes here */
+#endif
+# if (CONFIG_USR_DRV_FLASH_1M && CONFIG_USR_DRV_FLASH_DUAL_BANK) || CONFIG_USR_DRV_FLASH_2M
+        case FLASH_SECTOR_12:
+        case FLASH_SECTOR_13:
+        case FLASH_SECTOR_14:
+        case FLASH_SECTOR_15:
+        case FLASH_SECTOR_16:
+        case FLASH_SECTOR_17:
+        case FLASH_SECTOR_18:
+        case FLASH_SECTOR_19:
+    /* 1MB flash in dual banking finishes here */
+#endif
+# if CONFIG_USR_DRV_FLASH_2M
+        case FLASH_SECTOR_20:
+        case FLASH_SECTOR_21:
+        case FLASH_SECTOR_22:
+        case FLASH_SECTOR_23:
+    /* 2MB flash in dual banking finishes here */
+#endif
+            printf("true for %x\n", addr);
+            return true;
+        default:
+            printf("false for %x\n", addr);
+            return false;
+    }
+	return false;
+}
+
 /**
  * \brief Select the sector to erase
  *
@@ -279,94 +327,94 @@ void flash_lock_opt(void)
  *
  * \return sector number to erase
  */
-uint8_t flash_select_sector(uint32_t *addr)
+uint8_t flash_select_sector(physaddr_t addr)
 {
 	uint8_t sector = 255;
 	/* First 8 sectors are the same in single/dual mem config */
-	if ((uint32_t)addr <= FLASH_SECTOR_0_END) {
+	if (addr <= FLASH_SECTOR_0_END) {
 		sector = 0;
 	}
-	else if ((uint32_t)addr <= FLASH_SECTOR_1_END) {
+	else if (addr <= FLASH_SECTOR_1_END) {
 		sector = 1;
 	}
-	else if ((uint32_t)addr <= FLASH_SECTOR_2_END) {
+	else if (addr <= FLASH_SECTOR_2_END) {
 		sector = 2;
 	}
-	else if ((uint32_t)addr <= FLASH_SECTOR_3_END) {
+	else if (addr <= FLASH_SECTOR_3_END) {
 		sector = 3;
 	}
-	else if ((uint32_t)addr <= FLASH_SECTOR_4_END) {
+	else if (addr <= FLASH_SECTOR_4_END) {
 		sector = 4;
 	}
-	else if ((uint32_t)addr <= FLASH_SECTOR_5_END) {
+	else if (addr <= FLASH_SECTOR_5_END) {
 		sector = 5;
 	}
-	else if ((uint32_t)addr <= FLASH_SECTOR_6_END) {
+	else if (addr <= FLASH_SECTOR_6_END) {
 		sector = 6;
 	}
-	else if ((uint32_t)addr <= FLASH_SECTOR_7_END) {
+	else if (addr <= FLASH_SECTOR_7_END) {
 		sector = 7;
 	}
-# if (USR_DRV_FLASH_1M && !USR_DRV_FLASH_DUAL_BANK) || USR_DRV_FLASH_2M
+# if (CONFIG_USR_DRV_FLASH_1M && !CONFIG_USR_DRV_FLASH_DUAL_BANK) || CONFIG_USR_DRV_FLASH_2M
     /* 1MB flash in dual banking doesn't have these 4 sectors */
-	else if ((uint32_t)addr <= FLASH_SECTOR_8_END) {
+	else if (addr <= FLASH_SECTOR_8_END) {
 		sector = 8;
 	}
-	else if ((uint32_t)addr <= FLASH_SECTOR_9_END) {
+	else if (addr <= FLASH_SECTOR_9_END) {
 		sector = 9;
 	}
-	else if ((uint32_t)addr <= FLASH_SECTOR_10_END) {
+	else if (addr <= FLASH_SECTOR_10_END) {
 		sector = 10;
 	}
-	else if ((uint32_t)addr <= FLASH_SECTOR_11_END) {
+	else if (addr <= FLASH_SECTOR_11_END) {
 		sector = 11;
 	}
     /* 1MB flash in single banking finishes here */
 #endif
-# if (USR_DRV_FLASH_1M && USR_DRV_FLASH_DUAL_BANK) || USR_DRV_FLASH_2M
-	else if ((uint32_t)addr <= FLASH_SECTOR_12_END) {
+# if (CONFIG_USR_DRV_FLASH_1M && CONFIG_USR_DRV_FLASH_DUAL_BANK) || CONFIG_USR_DRV_FLASH_2M
+	else if (addr <= FLASH_SECTOR_12_END) {
 		sector = 12;
 	}
-	else if ((uint32_t)addr <= FLASH_SECTOR_13_END) {
+	else if (addr <= FLASH_SECTOR_13_END) {
 		sector = 13;
 	}
-	else if ((uint32_t)addr <= FLASH_SECTOR_14_END) {
+	else if (addr <= FLASH_SECTOR_14_END) {
 		sector = 14;
 	}
-	else if ((uint32_t)addr <= FLASH_SECTOR_15_END) {
+	else if (addr <= FLASH_SECTOR_15_END) {
 		sector = 15;
 	}
-	else if ((uint32_t)addr <= FLASH_SECTOR_16_END) {
+	else if (addr <= FLASH_SECTOR_16_END) {
 		sector = 16;
 	}
-	else if ((uint32_t)addr <= FLASH_SECTOR_17_END) {
+	else if (addr <= FLASH_SECTOR_17_END) {
 		sector = 17;
 	}
-	else if ((uint32_t)addr <= FLASH_SECTOR_18_END) {
+	else if (addr <= FLASH_SECTOR_18_END) {
 		sector = 18;
 	}
-	else if ((uint32_t)addr <= FLASH_SECTOR_19_END) {
+	else if (addr <= FLASH_SECTOR_19_END) {
 		sector = 19;
 	}
     /* 1MB flash in dual banking finishes here */
 #endif
-# if USR_DRV_FLASH_2M
-	else if ((uint32_t)addr <= FLASH_SECTOR_20_END) {
+# if CONFIG_USR_DRV_FLASH_2M
+	else if (addr <= FLASH_SECTOR_20_END) {
 		sector = 20;
 	}
-	else if ((uint32_t)addr <= FLASH_SECTOR_21_END) {
+	else if (addr <= FLASH_SECTOR_21_END) {
 		sector = 21;
 	}
-	else if ((uint32_t)addr <= FLASH_SECTOR_22_END) {
+	else if (addr <= FLASH_SECTOR_22_END) {
 		sector = 22;
 	}
-	else if ((uint32_t)addr <= FLASH_SECTOR_23_END) {
+	else if (addr <= FLASH_SECTOR_23_END) {
 		sector = 23;
 	}
     /* 2MB flash in dual banking finishes here */
 #endif
 	else {
-		log_printf("Error: Wrong address case, can't happen.\n");
+		log_printf("Error: %x Wrong address case, can't happen.\n", addr);
 		while(1){};
 	}
 	return sector;
@@ -381,11 +429,11 @@ uint8_t flash_select_sector(uint32_t *addr)
  * @param sector Sector to erase (from 16 to 128 kB)
  * @return Erased sector number
  */
-uint8_t flash_sector_erase(uint32_t *addr)
+uint8_t flash_sector_erase(physaddr_t addr)
 {
 	uint8_t sector = 255;
 	/* Check that we're looking into the flash */
-	assert(IS_IN_FLASH((uint32_t)addr));
+	assert(IS_IN_FLASH(addr));
 
 	/* Check that the BSY bit in the FLASH_SR reg is not set */
 	if(flash_is_busy()){
@@ -470,6 +518,7 @@ void flash_mass_erase(void)
 
 /* Macro for programming factorization */
 #define flash_program(addr, elem, elem_cfg) do {\
+    uint32_t reg;\
 	/* Check that the BSY bit in the FLASH_SR reg is not set */\
 	if (flash_is_busy()) {\
 		log_printf("Flash busy. Should not happen\n");\
@@ -479,6 +528,8 @@ void flash_mass_erase(void)
 	set_reg(r_CORTEX_M_FLASH_CR, (elem_cfg), FLASH_CR_PSIZE);\
 	/* Set PG bit */\
 	set_reg(r_CORTEX_M_FLASH_CR, 1, FLASH_CR_PG);\
+    reg = read_reg_value(r_CORTEX_M_FLASH_CR);\
+    printf("flash CR: %x\n", reg);\
 	/* Perform data write op */\
 	*(addr) = (elem);\
 	/* Wait for BSY bit to be cleared */\
@@ -495,7 +546,35 @@ void flash_mass_erase(void)
  */
 void flash_program_dword(uint64_t *addr, uint64_t value)
 {
+    uint32_t reg;
+    if (is_sector_start(addr) == true) {
+        if (flash_sector_erase(addr) == 0xff) {
+            goto err;
+        }
+    }
 	flash_program(addr, value, 3);
+    reg = read_reg_value(r_CORTEX_M_FLASH_SR);
+    if (reg & 0x000000f2) {
+        if (reg & FLASH_SR_OPERR_Msk) {
+            log_printf("flash write error: OPERR\n");
+        }
+        if (reg & FLASH_SR_WRPERR_Msk) {
+            log_printf("flash write error: WRPERR\n");
+        }
+        if (reg & FLASH_SR_PGAERR_Msk) {
+            log_printf("flash write error: PGAERR\n");
+        }
+        if (reg & FLASH_SR_PGPERR_Msk) {
+            log_printf("flash write error: PGPERR\n");
+        }
+        if (reg & FLASH_SR_PGSERR_Msk) {
+            log_printf("flash write error: PGSERR\n");
+        }
+    }
+    return;
+err:
+    log_printf("error while erasing sector at addr %x\n", addr);
+    return;
 }
 
 /**
@@ -545,14 +624,14 @@ void flash_program_byte(uint8_t *addr, uint8_t value)
  * @param size		Size to read
  * @param buffer	Buffer to write in
  */
-void flash_read(uint8_t *buffer, uint32_t *addr, uint32_t size)
+void flash_read(uint8_t *buffer, physaddr_t addr, uint32_t size)
 {
-	if (!IS_IN_FLASH((uint32_t)addr)) {
+	if (!IS_IN_FLASH(addr)) {
 		log_printf("Read not authorized (not in flash memory)\n");
 		while(1){};
 	}
 	/* Copy data into buffer */
-	memcpy(buffer, addr, size);
+	memcpy(buffer, (void*)addr, size);
 }
 
 
@@ -643,7 +722,7 @@ uint32_t flash_sector_size(uint8_t sector)
 			return FLASH_SECTOR_SIZE(6);
 		case 7:
 			return FLASH_SECTOR_SIZE(7);
-# if (USR_DRV_FLASH_1M && !USR_DRV_FLASH_DUAL_BANK) || USR_DRV_FLASH_2M
+# if (CONFIG_USR_DRV_FLASH_1M && !CONFIG_USR_DRV_FLASH_DUAL_BANK) || CONFIG_USR_DRV_FLASH_2M
     /* 1MB flash in dual banking doesn't have these 4 sectors */
 		case 8:
 			return FLASH_SECTOR_SIZE(8);
@@ -654,7 +733,7 @@ uint32_t flash_sector_size(uint8_t sector)
 		case 11:
 			return FLASH_SECTOR_SIZE(11);
 #endif
-#if (USR_DRV_FLASH_1M && USR_DRV_FLASH_DUAL_BANK) || USR_DRV_FLASH_2M
+#if (CONFIG_USR_DRV_FLASH_1M && CONFIG_USR_DRV_FLASH_DUAL_BANK) || CONFIG_USR_DRV_FLASH_2M
 		case 12:
 			return FLASH_SECTOR_SIZE(12);
 		case 13:
@@ -673,7 +752,7 @@ uint32_t flash_sector_size(uint8_t sector)
 			return FLASH_SECTOR_SIZE(19);
     /* 1MB flash in dual banking finishes here */
 #endif
-# if USR_DRV_FLASH_2M
+# if CONFIG_USR_DRV_FLASH_2M
 		case 20:
 			return FLASH_SECTOR_SIZE(20);
 		case 21:
@@ -700,13 +779,13 @@ uint32_t flash_sector_size(uint8_t sector)
  * @param dest Destination address
  * @param src Sourcr address
  */
-void flash_copy_sector(uint32_t *dest, uint32_t *src)
+void flash_copy_sector(physaddr_t dest, physaddr_t src)
 {
 	/* Set up variables */
 	uint8_t sector = 20;
 	uint8_t buffer[64];
 	uint32_t i = 0, j = 0, k = 0, sector_size = 0;
-	if ((!IS_IN_FLASH((uint32_t)dest)) || (!IS_IN_FLASH((uint32_t)src))) {
+	if ((!IS_IN_FLASH(dest)) || (!IS_IN_FLASH(src))) {
 		log_printf("Read not authorized (not in flash memory)\n");
 		while(1){};
 	}
@@ -720,7 +799,7 @@ void flash_copy_sector(uint32_t *dest, uint32_t *src)
 		log_printf("#%d ", i);
 		for (j = 0; j < 16; j++) { /* Go through each 64B packet of each kB */
 			/* Read packet to copy */
-			flash_read(buffer, (uint32_t *)(src+(i<<8)+(j<<4)), 64); /* !!  sigh 32 bit addr, >>2  */
+			flash_read(buffer, (src+(i<<8)+(j<<4)), 64); /* !!  sigh 32 bit addr, >>2  */
 			log_printf("Buffer #%d:\n", j+i*2);
 			for (k = 0; k < 64; k++)
 				log_printf("%x ", buffer[k]);
@@ -728,7 +807,7 @@ void flash_copy_sector(uint32_t *dest, uint32_t *src)
 			/* Write packet by 1B */
 			for (k = 0; k < 64; k++)
 				flash_program_byte((uint8_t *)(dest)+(i<<10)+(j<<6)+k, buffer[k]);
-			flash_read(buffer,( uint32_t *)(dest+(i<<8)+(j<<4)), 64);
+			flash_read(buffer,(dest+(i<<8)+(j<<4)), 64);
 			log_printf("Dest:\n");
 			for (k = 0; k < 64; k++)
 				log_printf("%x ", buffer[k]);
