@@ -64,8 +64,13 @@
 #define FLASH_CR_SER_Msk		((uint32_t)1 << FLASH_CR_SER_Pos)
 #define FLASH_CR_MER_Pos		2
 #define FLASH_CR_MER_Msk		((uint32_t)1 << FLASH_CR_MER_Pos)
+
 #define FLASH_CR_SNB_Pos		3
+#if defined(CONFIG_USR_DRV_FLASH_DUAL_BANK) /*  Dual blank only on f42xxx/43xxx */
+#define FLASH_CR_SNB_Msk		((uint32_t)0x1F << FLASH_CR_SNB_Pos)
+#else
 #define FLASH_CR_SNB_Msk		((uint32_t)0xF << FLASH_CR_SNB_Pos)
+#endif
 #define FLASH_CR_PSIZE_Pos		8
 #define FLASH_CR_PSIZE_Msk		((uint32_t)3 << FLASH_CR_PSIZE_Pos)
 #if defined(CONFIG_USR_DRV_FLASH_DUAL_BANK)			/* MER1 (only on f42xxx/43xxx) */
@@ -160,6 +165,9 @@
 #define FLASH_SR_PGAERR                      ((uint32_t)0x00000020)
 #define FLASH_SR_PGPERR                      ((uint32_t)0x00000040)
 #define FLASH_SR_PGSERR                      ((uint32_t)0x00000080)
+#if defined(CONFIG_STM32F439) || defined(CONFIG_STM32F429)      /*  Dual blank only on f42xxx/43xxx */
+#define FLASH_SR_RDERR                       ((uint32_t)0x00000100)
+#endif
 #define FLASH_SR_BSY                         ((uint32_t)0x00010000)
 
 /*******************  Bits definition for FLASH_CR register  ******************/

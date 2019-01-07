@@ -234,6 +234,14 @@ void flash_unlock(void)
 	log_printf("Unlocking flash\n");
 	write_reg_value(r_CORTEX_M_FLASH_KEYR, KEY1);
 	write_reg_value(r_CORTEX_M_FLASH_KEYR, KEY2);
+
+    uint32_t reg;
+    /*
+     * when unlocking flash for the first time after reset, the PGSERR flag
+     * is active and need to be cleared.
+     * errata: this is *not* described in the datasheet !
+     */
+    set_reg(r_CORTEX_M_FLASH_SR, 1, FLASH_SR_PGSERR);
 }
 
 /**
@@ -271,7 +279,6 @@ void flash_lock_opt(void)
 
 static bool is_sector_start(physaddr_t addr)
 {
-    printf("checking address %x\n", addr);
     switch (addr) {
 
         case FLASH_SECTOR_0:
@@ -308,10 +315,8 @@ static bool is_sector_start(physaddr_t addr)
         case FLASH_SECTOR_23:
     /* 2MB flash in dual banking finishes here */
 #endif
-            printf("true for %x\n", addr);
             return true;
         default:
-            printf("false for %x\n", addr);
             return false;
     }
 	return false;
@@ -421,6 +426,57 @@ uint8_t flash_select_sector(physaddr_t addr)
 }
 
 
+/*
+ * flash error bits management
+ */
+static inline bool flash_has_programming_errors(void)
+{
+    uint32_t reg;
+    reg = read_reg_value(r_CORTEX_M_FLASH_SR);
+#if defined(CONFIG_STM32F439) || defined(CONFIG_STM32F429)      /*  Dual blank only on f42xxx/43xxx */
+    uint32_t err_mask = 0x1f2;
+#else
+    uint32_t err_mask = 0xf2;
+#endif
+    if (reg & err_mask) {
+        if (reg & FLASH_SR_OPERR_Msk) {
+            log_printf("flash write error: OPERR\n");
+            set_reg(r_CORTEX_M_FLASH_SR, 1, FLASH_SR_OPERR);
+            goto err;
+        }
+        if (reg & FLASH_SR_WRPERR_Msk) {
+            log_printf("flash write error: WRPERR\n");
+            set_reg(r_CORTEX_M_FLASH_SR, 1, FLASH_SR_WRPERR);
+            goto err;
+        }
+        if (reg & FLASH_SR_PGAERR_Msk) {
+            log_printf("flash write error: PGAERR\n");
+            set_reg(r_CORTEX_M_FLASH_SR, 1, FLASH_SR_PGAERR);
+            goto err;
+        }
+        if (reg & FLASH_SR_PGPERR_Msk) {
+            log_printf("flash write error: PGPERR\n");
+            set_reg(r_CORTEX_M_FLASH_SR, 1, FLASH_SR_PGPERR);
+            goto err;
+        }
+        if (reg & FLASH_SR_PGSERR_Msk) {
+            log_printf("flash write error: PGSERR\n");
+            set_reg(r_CORTEX_M_FLASH_SR, 1, FLASH_SR_PGSERR);
+            goto err;
+        }
+#if defined(CONFIG_STM32F439) || defined(CONFIG_STM32F429)			/* RDERR (only on f42xxx/43xxx) */
+        if (reg & FLASH_SR_RDERR_Msk) {
+            log_printf("flash write error: RDERR\n");
+            set_reg(r_CORTEX_M_FLASH_SR, 1, FLASH_SR_RDERR);
+            goto err;
+        }
+#endif
+    }
+    return false;
+err:
+    return true;
+}
+
 
 
 /**
@@ -438,12 +494,21 @@ uint8_t flash_sector_erase(physaddr_t addr)
 	/* Check that the BSY bit in the FLASH_SR reg is not set */
 	if(flash_is_busy()){
 		log_printf("Flash busy. Should not happen\n");
-		while(1){};
-	}
+        flash_busy_wait();
+    }
 
 	/* Select sector to erase */
 	sector = flash_select_sector(addr);
+#if defined(CONFIG_USR_DRV_FLASH_DUAL_BANK)
+    if (sector > 11) {
+        /* updating sector number for SNB[4:0] field instead of SNB[3:0] */
+        sector = (sector - 12) | 0x10;
+    }
+#endif
 	log_printf("Erasing flash sector #%d\n", sector);
+
+	/* Set PSIZE to 0b10 (see STM-RM00090 chap. 3.6.2, PSIZE must be set) */
+	set_reg(r_CORTEX_M_FLASH_CR, 2, FLASH_CR_PSIZE);
 
 	/* Set SER bit */
 	set_reg(r_CORTEX_M_FLASH_CR, 1, FLASH_CR_SER);
@@ -457,7 +522,19 @@ uint8_t flash_sector_erase(physaddr_t addr)
 	/* Wait for BSY bit to be cleared */
 	flash_busy_wait();
 
+	/* Clean sector */
+	set_reg(r_CORTEX_M_FLASH_CR, 0, FLASH_CR_SNB);
+
+	/* Unset SER bit */
+	set_reg(r_CORTEX_M_FLASH_CR, 0, FLASH_CR_SER);
+
+    if (flash_has_programming_errors()) {
+        goto err;
+    }
 	return sector;
+err:
+    log_printf("error while erasing sector at addr %x\n", addr);
+    return 0xff;
 }
 
 /**
@@ -490,6 +567,14 @@ void flash_bank_erase(uint8_t bank)
 
 	/* Wait for BSY bit to be cleared */
 	flash_busy_wait();
+
+    if (flash_has_programming_errors()) {
+        goto err;
+    }
+	return;
+err:
+    log_printf("error while erasing bank\n");
+    return;
 }
 
 /**
@@ -513,23 +598,29 @@ void flash_mass_erase(void)
 
 	/* Wait for BSY bit to be cleared */
 	flash_busy_wait();
+
+    if (flash_has_programming_errors()) {
+        goto err;
+    }
+	return;
+err:
+    log_printf("error while mass-erasing\n");
+    return;
+
 }
 
 
 /* Macro for programming factorization */
 #define flash_program(addr, elem, elem_cfg) do {\
-    uint32_t reg;\
 	/* Check that the BSY bit in the FLASH_SR reg is not set */\
 	if (flash_is_busy()) {\
 		log_printf("Flash busy. Should not happen\n");\
-		while(1){};\
+        flash_busy_wait();\
 	}\
 	/* Set PSIZE for 64 bits writing */\
 	set_reg(r_CORTEX_M_FLASH_CR, (elem_cfg), FLASH_CR_PSIZE);\
 	/* Set PG bit */\
 	set_reg(r_CORTEX_M_FLASH_CR, 1, FLASH_CR_PG);\
-    reg = read_reg_value(r_CORTEX_M_FLASH_CR);\
-    printf("flash CR: %x\n", reg);\
 	/* Perform data write op */\
 	*(addr) = (elem);\
 	/* Wait for BSY bit to be cleared */\
@@ -546,34 +637,18 @@ void flash_mass_erase(void)
  */
 void flash_program_dword(uint64_t *addr, uint64_t value)
 {
-    uint32_t reg;
-    if (is_sector_start(addr) == true) {
-        if (flash_sector_erase(addr) == 0xff) {
+    if (is_sector_start((physaddr_t)addr) == true) {
+        if (flash_sector_erase((physaddr_t)addr) == 0xff) {
             goto err;
         }
     }
 	flash_program(addr, value, 3);
-    reg = read_reg_value(r_CORTEX_M_FLASH_SR);
-    if (reg & 0x000000f2) {
-        if (reg & FLASH_SR_OPERR_Msk) {
-            log_printf("flash write error: OPERR\n");
-        }
-        if (reg & FLASH_SR_WRPERR_Msk) {
-            log_printf("flash write error: WRPERR\n");
-        }
-        if (reg & FLASH_SR_PGAERR_Msk) {
-            log_printf("flash write error: PGAERR\n");
-        }
-        if (reg & FLASH_SR_PGPERR_Msk) {
-            log_printf("flash write error: PGPERR\n");
-        }
-        if (reg & FLASH_SR_PGSERR_Msk) {
-            log_printf("flash write error: PGSERR\n");
-        }
+    if (flash_has_programming_errors()) {
+        goto err;
     }
     return;
 err:
-    log_printf("error while erasing sector at addr %x\n", addr);
+    log_printf("error while programming sector at addr %x\n", addr);
     return;
 }
 
@@ -587,7 +662,23 @@ err:
  */
 void flash_program_word(uint32_t *addr, uint32_t value)
 {
+    if (is_sector_start((physaddr_t)addr) == true) {
+        printf("starting programing new sector (@%x)\n", addr);
+        if (flash_sector_erase((physaddr_t)addr) == 0xff) {
+#if 0
+            goto err;
+#endif
+        }
+    }
 	flash_program(addr, value, 2);
+    if (flash_has_programming_errors()) {
+        goto err;
+    }
+    return;
+err:
+    log_printf("error while programming sector at addr %x\n", addr);
+    return;
+
 }
 
 /**
@@ -600,7 +691,19 @@ void flash_program_word(uint32_t *addr, uint32_t value)
  */
 void flash_program_hword(uint16_t *addr, uint16_t value)
 {
+    if (is_sector_start((physaddr_t)addr) == true) {
+        if (flash_sector_erase((physaddr_t)addr) == 0xff) {
+            goto err;
+        }
+    }
 	flash_program(addr, value, 1);
+    if (flash_has_programming_errors()) {
+        goto err;
+    }
+    return;
+err:
+    log_printf("error while programming sector at addr %x\n", addr);
+    return;
 }
 
 /**
@@ -613,7 +716,19 @@ void flash_program_hword(uint16_t *addr, uint16_t value)
  */
 void flash_program_byte(uint8_t *addr, uint8_t value)
 {
+    if (is_sector_start((physaddr_t)addr) == true) {
+        if (flash_sector_erase((physaddr_t)addr) == 0xff) {
+            goto err;
+        }
+    }
 	flash_program(addr, value, 0);
+    if (flash_has_programming_errors()) {
+        goto err;
+    }
+    return;
+err:
+    log_printf("error while programming sector at addr %x\n", addr);
+    return;
 }
 
 
@@ -791,7 +906,7 @@ void flash_copy_sector(physaddr_t dest, physaddr_t src)
 	}
 	memset(buffer, 0, 64);
 	/* Erase sector */
-	sector = flash_sector_erase(dest);
+	sector = flash_sector_erase((physaddr_t)dest);
 	/* Get sector size */
 	sector_size = flash_sector_size(sector);
 	/* Perform copy */
