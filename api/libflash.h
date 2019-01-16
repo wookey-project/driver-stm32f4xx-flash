@@ -137,9 +137,9 @@
  * SoCs
  */
 #define FLASH_SECTOR_SYSTEM_MEM		((uint32_t) 0x1FFF0000) /* 30 kB */
-#define FLASH_SECTOR_SYSTEM_MEM_END	((uint32_t) 0x1FFF77FF) 
-#define FLASH_SECTOR_OTP_AREA		((uint32_t) 0x1FFF7800) /* 528 B */ 
-#define FLASH_SECTOR_OTP_AREA_END	((uint32_t) 0x1FFF7A0F) 
+#define FLASH_SECTOR_SYSTEM_MEM_END	((uint32_t) 0x1FFF77FF)
+#define FLASH_SECTOR_OTP_AREA		((uint32_t) 0x1FFF7800) /* 528 B */
+#define FLASH_SECTOR_OTP_AREA_END	((uint32_t) 0x1FFF7A0F)
 #define FLASH_OPTION_BYTES		((uint32_t) 0x1FFFC000) /* 16 B */
 #define FLASH_OPTION_BYTES_END		((uint32_t) 0x1FFFC00F)
 
@@ -178,6 +178,7 @@ typedef enum {
 # endif
 #endif
     CTRL,
+    CTRL2,
     SYSTEM,
     OTP,
     OPT_BANK1,
@@ -209,6 +210,9 @@ typedef struct {
 # endif
 #endif
     bool map_ctrl;
+#ifdef CONFIG_WOOKEY
+    bool map_ctrl_2;
+#endif
     bool map_system;
     bool map_otp;
     bool map_opt_bank1;
@@ -261,6 +265,9 @@ void flash_set_bank_conf(uint8_t conf);
 void flash_copy_sector(physaddr_t dest, physaddr_t src);
 
 int flash_device_early_init(t_device_mapping *devmap);
+
+/* return true if the device was previously registered during early init */
+bool flash_is_device_registered(t_flash_dev_id device);
 
 #endif /* _STM32F4XX_FLASH_H */
 

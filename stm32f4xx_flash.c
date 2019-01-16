@@ -11,7 +11,7 @@
 #include "api/regutils.h"
 #include "flash_regs.h"
 
-#define FLASH_DEBUG 1
+#define FLASH_DEBUG 0
 
 /* Primitive for debug output */
 #if FLASH_DEBUG
@@ -91,6 +91,7 @@ static const device_t flash_device_tab[] = {
 # endif
 #endif
     {"flash_ctrl",      0x40023C00,    0x400, 0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
+    {"flash_ctrl_2",    0x40023C00,    0x100, 0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
     {"flash_system",    0x1FFF0000,   0x7800, 0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
     {"flash_otp",       0x1FFF7800,    0x400, 0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
     {"flash_opb_bk1",   0x1FFFC000,     0x20, 0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
@@ -99,6 +100,14 @@ static const device_t flash_device_tab[] = {
 #endif
 };
 #pragma GCC diagnostic pop
+
+bool flash_is_device_registered(t_flash_dev_id device)
+{
+    if (flash_device_desc_tab[device] != 0) {
+        return true;
+    }
+    return false;
+}
 
 /* Register the flash device with the kernel */
 int flash_device_early_init(t_device_mapping *devmap)
@@ -110,7 +119,9 @@ int flash_device_early_init(t_device_mapping *devmap)
     }
 #ifdef CONFIG_WOOKEY
     if (devmap->map_flip_shr) {
+#if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[FLIP_SHR].name);
+#endif
         ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[FLIP_SHR],
                                        &flash_device_desc_tab[FLIP_SHR]);
         if (ret != SYS_E_DONE) {
@@ -118,7 +129,9 @@ int flash_device_early_init(t_device_mapping *devmap)
         }
     }
     if (devmap->map_flip) {
+#if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[FLIP].name);
+#endif
         ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[FLIP],
                                        &flash_device_desc_tab[FLIP]);
         if (ret != SYS_E_DONE) {
@@ -126,7 +139,9 @@ int flash_device_early_init(t_device_mapping *devmap)
         }
     }
     if (devmap->map_flop_shr) {
+#if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[FLOP_SHR].name);
+#endif
         ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[FLOP_SHR],
                                        &flash_device_desc_tab[FLOP_SHR]);
         if (ret != SYS_E_DONE) {
@@ -134,7 +149,9 @@ int flash_device_early_init(t_device_mapping *devmap)
         }
     }
     if (devmap->map_flop) {
+#if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[FLOP].name);
+#endif
         ret = sys_init(INIT_DEVACCESS, (device_t*)&(flash_device_tab[FLOP]),
                                        &flash_device_desc_tab[FLOP]);
         if (ret != SYS_E_DONE) {
@@ -144,7 +161,9 @@ int flash_device_early_init(t_device_mapping *devmap)
 #else
 # if CONFIG_USR_DRV_FLASH_DUAL_BANK
     if (devmap->map_bank1) {
+#if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[BANK1].name);
+#endif
         ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[BANK1],
                                        &flash_device_desc_tab[BANK1]);
         if (ret != SYS_E_DONE) {
@@ -152,7 +171,9 @@ int flash_device_early_init(t_device_mapping *devmap)
         }
     }
     if (devmap->map_bank2) {
+#if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[BANK2].name);
+#endif
         ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[BANK2],
                                        &flash_device_desc_tab[BANK2]);
         if (ret != SYS_E_DONE) {
@@ -161,7 +182,9 @@ int flash_device_early_init(t_device_mapping *devmap)
     }
 # else
     if (devmap->map_mem) {
+#if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[MEM].name);
+#endif
         ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[MEM],
                                        &flash_device_desc_tab[MEM]);
         if (ret != SYS_E_DONE) {
@@ -171,15 +194,30 @@ int flash_device_early_init(t_device_mapping *devmap)
 # endif
 #endif
     if (devmap->map_ctrl) {
+#if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[CTRL].name);
+#endif
         ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[CTRL],
                                        &flash_device_desc_tab[CTRL]);
         if (ret != SYS_E_DONE) {
             goto err;
         }
     }
+    if (devmap->map_ctrl_2) {
+#if FLASH_DEBUG
+        printf("registering %s\n", flash_device_tab[CTRL2].name);
+#endif
+        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[CTRL2],
+                                       &flash_device_desc_tab[CTRL2]);
+        if (ret != SYS_E_DONE) {
+            goto err;
+        }
+    }
+
     if (devmap->map_system) {
+#if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[SYSTEM].name);
+#endif
         ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[SYSTEM],
                                        &flash_device_desc_tab[SYSTEM]);
         if (ret != SYS_E_DONE) {
@@ -187,7 +225,9 @@ int flash_device_early_init(t_device_mapping *devmap)
         }
     }
     if (devmap->map_otp) {
+#if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[OTP].name);
+#endif
         ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[OTP],
                                        &flash_device_desc_tab[OTP]);
         if (ret != SYS_E_DONE) {
@@ -195,7 +235,9 @@ int flash_device_early_init(t_device_mapping *devmap)
         }
     }
     if (devmap->map_opt_bank1) {
+#if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[OPT_BANK1].name);
+#endif
         ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[OPT_BANK1],
                                        &flash_device_desc_tab[OPT_BANK1]);
         if (ret != SYS_E_DONE) {
@@ -204,7 +246,9 @@ int flash_device_early_init(t_device_mapping *devmap)
     }
 #if CONFIG_USR_DRV_FLASH_DUAL_BANK
     if (devmap->map_opt_bank2) {
+#if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[OPT_BANK2].name);
+#endif
         ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[OPT_BANK2],
                                        &flash_device_desc_tab[OPT_BANK2]);
         if (ret != SYS_E_DONE) {
@@ -212,7 +256,9 @@ int flash_device_early_init(t_device_mapping *devmap)
         }
     }
 #endif
+#if FLASH_DEBUG
 	log_printf("registering flash driver done.\n");
+#endif
 
 	return 0;
 err:
