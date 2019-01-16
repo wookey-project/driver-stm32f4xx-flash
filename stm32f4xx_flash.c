@@ -21,7 +21,7 @@
 #endif
 
 #ifndef assert
-#define assert(val) if (!(val)) { log_printf("bkpt"); while(1){}; }; 
+#define assert(val) if (!(val)) { log_printf("bkpt"); while(1){}; };
 #endif
 
 /* the flash device is mapped in a discretional memory layout:
@@ -67,6 +67,9 @@ static int flash_device_desc_tab[] = {
 #endif
 };
 
+/* missing braces error */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-braces"
 /* to .rodata: */
 static const device_t flash_device_tab[] = {
 #if CONFIG_WOOKEY
@@ -95,11 +98,12 @@ static const device_t flash_device_tab[] = {
     {"flash_opb_bk2",   0x1FFEC000,     0x20, 0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
 #endif
 };
+#pragma GCC diagnostic pop
 
 /* Register the flash device with the kernel */
 int flash_device_early_init(t_device_mapping *devmap)
 {
-	e_syscall_ret ret = 0;	
+	e_syscall_ret ret = 0;
 
     if (!devmap) {
         return -1;
