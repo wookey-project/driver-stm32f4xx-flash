@@ -239,7 +239,6 @@ void flash_unlock(void)
 	write_reg_value(r_CORTEX_M_FLASH_KEYR, KEY1);
 	write_reg_value(r_CORTEX_M_FLASH_KEYR, KEY2);
 
-    uint32_t reg;
     /*
      * when unlocking flash for the first time after reset, the PGSERR flag
      * is active and need to be cleared.
@@ -779,7 +778,7 @@ uint8_t flash_get_bank_conf(void)
  *
  * @param conf 0 (default) :single (12 sectors) / 1 : dual (24 sectors)
  */
-void flash_set_bank_conf(uint8_t conf)
+void flash_set_bank_conf(uint8_t conf __attribute__((unused)))
 {
 #if CONFIG_USR_DRV_FLASH_1M
 	if (conf){
