@@ -73,9 +73,9 @@ static int flash_device_desc_tab[] = {
 /* to .rodata: */
 static const device_t flash_device_tab[] = {
 #if CONFIG_WOOKEY
-    {"flash_flip_shr", 0x08010000, 0x10000,  0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
+    {"flash_flip_shr", 0x08008000, 0x8000,  0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
     {"flash_flip",     0x08000000, 0x100000, 0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
-    {"flash_flop_shr", 0x08110000, 0x10000,  0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
+    {"flash_flop_shr", 0x08108000, 0x8000,  0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
     {"flash_flop",     0x08100000, 0x100000, 0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
 #else
 # if CONFIG_USR_DRV_FLASH_DUAL_BANK
