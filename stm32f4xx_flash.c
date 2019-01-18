@@ -73,9 +73,9 @@ static int flash_device_desc_tab[] = {
 /* to .rodata: */
 static const device_t flash_device_tab[] = {
 #if CONFIG_WOOKEY
-    {"flash_flip_shr", 0x08008000, 0x8000,  0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
+    {"flash_flip_shr", 0x0800C000, 0x4000,  0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
     {"flash_flip",     0x08000000, 0x100000, 0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
-    {"flash_flop_shr", 0x08108000, 0x8000,  0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
+    {"flash_flop_shr", 0x0810C000, 0x4000,  0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
     {"flash_flop",     0x08100000, 0x100000, 0, 0, DEV_MAP_VOLUNTARY, { 0 }, { 0 } },
 #else
 # if CONFIG_USR_DRV_FLASH_DUAL_BANK
@@ -309,6 +309,7 @@ void flash_unlock_opt(void)
 void flash_lock(void)
 {
 	log_printf("Locking flash\n");
+	write_reg_value(r_CORTEX_M_FLASH_CR, 0x00000000);
 	set_reg(r_CORTEX_M_FLASH_CR, 1, FLASH_CR_LOCK);	/* Write only to 1, unlock is
 							 * done by the previous
 							 * sequence (RM0090
@@ -436,6 +437,7 @@ uint8_t flash_select_sector(physaddr_t addr)
 		sector = 14;
 	}
 	else if (addr <= FLASH_SECTOR_15_END) {
+        printf("sector 15 selected\n");
 		sector = 15;
 	}
 	else if (addr <= FLASH_SECTOR_16_END) {
@@ -714,9 +716,7 @@ void flash_program_word(uint32_t *addr, uint32_t value)
     if (is_sector_start((physaddr_t)addr) == true) {
         printf("starting programing new sector (@%x)\n", addr);
         if (flash_sector_erase((physaddr_t)addr) == 0xff) {
-#if 0
             goto err;
-#endif
         }
     }
 	flash_program(addr, value, 2);
@@ -835,30 +835,6 @@ void flash_set_bank_conf(uint8_t conf __attribute__((unused)))
     /* with 2Mbytes flash mode, only dual bank mode is supported */
 }
 #endif
-
-/**
- * \brief Get bank currently used
- *
- * @return 0 for bank 1, 1 for bank 2
- */
-uint8_t get_active_bank(void)
-{
-	/* FIXME Verify cast */
-	return (uint8_t)get_reg_value((volatile uint32_t *)0x08060000, 1, 0);
-}
-
-/**
- * \brief Switch bank to use
- */
-void switch_active_bank(void)
-{
-	/* Get current bank */
-	uint8_t config = get_active_bank();
-	/* Switch value */
-	config = config == 0 ? 1 : 0;
-	/* Set new value */
-	set_reg_value((volatile uint32_t *)0x08060000, config, 1, 0);
-}
 
 /**
  * \brief Return sector size in bytes

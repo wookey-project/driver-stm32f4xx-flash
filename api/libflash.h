@@ -269,5 +269,7 @@ int flash_device_early_init(t_device_mapping *devmap);
 /* return true if the device was previously registered during early init */
 bool flash_is_device_registered(t_flash_dev_id device);
 
+uint32_t flash_sector_size(uint8_t sector);
+
 #endif /* _STM32F4XX_FLASH_H */
 
