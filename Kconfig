@@ -11,7 +11,7 @@ menu "Flash driver options"
 
 choice
   prompt "Flash size (SoC dependent)"
-  default USR_DRV_FLASH_2UAL_2M if STM32F439
+  default USR_DRV_FLASH_2M if STM32F439
   default USR_DRV_FLASH_1M
 
   config USR_DRV_FLASH_1M
@@ -32,7 +32,7 @@ choice
   default USR_DRV_FLASH_DUAL_BANK if STM32F429 || STM32F439
   default USR_DRV_FLASH_SINGLE_BANK
 
-  config USR_DRV_FLASH_SIGNLE_BANK
+  config USR_DRV_FLASH_SINGLE_BANK
   bool "any STM32F4xx in single bank mode"
 
   config USR_DRV_FLASH_DUAL_BANK
