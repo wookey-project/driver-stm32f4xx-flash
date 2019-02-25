@@ -20,10 +20,6 @@
 #define log_printf(...)
 #endif
 
-#ifndef assert
-#define assert(val) if (!(val)) { log_printf("bkpt"); while(1){}; };
-#endif
-
 /* the flash device is mapped in a discretional memory layout:
  * - the flash memory
  *     -> from 0x08000000 to 0x08010000 or 0x08020000 for 2M flash
@@ -122,7 +118,7 @@ int flash_device_early_init(t_device_mapping *devmap)
 #if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[FLIP_SHR].name);
 #endif
-        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[FLIP_SHR],
+        ret = sys_init(INIT_DEVACCESS, &flash_device_tab[FLIP_SHR],
                                        &flash_device_desc_tab[FLIP_SHR]);
         if (ret != SYS_E_DONE) {
             goto err;
@@ -132,7 +128,7 @@ int flash_device_early_init(t_device_mapping *devmap)
 #if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[FLIP].name);
 #endif
-        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[FLIP],
+        ret = sys_init(INIT_DEVACCESS, &flash_device_tab[FLIP],
                                        &flash_device_desc_tab[FLIP]);
         if (ret != SYS_E_DONE) {
             goto err;
@@ -142,7 +138,7 @@ int flash_device_early_init(t_device_mapping *devmap)
 #if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[FLOP_SHR].name);
 #endif
-        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[FLOP_SHR],
+        ret = sys_init(INIT_DEVACCESS, &flash_device_tab[FLOP_SHR],
                                        &flash_device_desc_tab[FLOP_SHR]);
         if (ret != SYS_E_DONE) {
             goto err;
@@ -152,7 +148,7 @@ int flash_device_early_init(t_device_mapping *devmap)
 #if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[FLOP].name);
 #endif
-        ret = sys_init(INIT_DEVACCESS, (device_t*)&(flash_device_tab[FLOP]),
+        ret = sys_init(INIT_DEVACCESS, &(flash_device_tab[FLOP]),
                                        &flash_device_desc_tab[FLOP]);
         if (ret != SYS_E_DONE) {
             goto err;
@@ -164,7 +160,7 @@ int flash_device_early_init(t_device_mapping *devmap)
 #if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[BANK1].name);
 #endif
-        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[BANK1],
+        ret = sys_init(INIT_DEVACCESS, &flash_device_tab[BANK1],
                                        &flash_device_desc_tab[BANK1]);
         if (ret != SYS_E_DONE) {
             goto err;
@@ -174,7 +170,7 @@ int flash_device_early_init(t_device_mapping *devmap)
 #if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[BANK2].name);
 #endif
-        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[BANK2],
+        ret = sys_init(INIT_DEVACCESS, &flash_device_tab[BANK2],
                                        &flash_device_desc_tab[BANK2]);
         if (ret != SYS_E_DONE) {
             goto err;
@@ -185,7 +181,7 @@ int flash_device_early_init(t_device_mapping *devmap)
 #if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[MEM].name);
 #endif
-        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[MEM],
+        ret = sys_init(INIT_DEVACCESS, &flash_device_tab[MEM],
                                        &flash_device_desc_tab[MEM]);
         if (ret != SYS_E_DONE) {
             goto err;
@@ -197,7 +193,7 @@ int flash_device_early_init(t_device_mapping *devmap)
 #if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[CTRL].name);
 #endif
-        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[CTRL],
+        ret = sys_init(INIT_DEVACCESS, &flash_device_tab[CTRL],
                                        &flash_device_desc_tab[CTRL]);
         if (ret != SYS_E_DONE) {
             goto err;
@@ -207,7 +203,7 @@ int flash_device_early_init(t_device_mapping *devmap)
 #if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[CTRL2].name);
 #endif
-        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[CTRL2],
+        ret = sys_init(INIT_DEVACCESS, &flash_device_tab[CTRL2],
                                        &flash_device_desc_tab[CTRL2]);
         if (ret != SYS_E_DONE) {
             goto err;
@@ -218,7 +214,7 @@ int flash_device_early_init(t_device_mapping *devmap)
 #if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[SYSTEM].name);
 #endif
-        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[SYSTEM],
+        ret = sys_init(INIT_DEVACCESS, &flash_device_tab[SYSTEM],
                                        &flash_device_desc_tab[SYSTEM]);
         if (ret != SYS_E_DONE) {
             goto err;
@@ -228,7 +224,7 @@ int flash_device_early_init(t_device_mapping *devmap)
 #if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[OTP].name);
 #endif
-        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[OTP],
+        ret = sys_init(INIT_DEVACCESS, &flash_device_tab[OTP],
                                        &flash_device_desc_tab[OTP]);
         if (ret != SYS_E_DONE) {
             goto err;
@@ -238,7 +234,7 @@ int flash_device_early_init(t_device_mapping *devmap)
 #if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[OPT_BANK1].name);
 #endif
-        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[OPT_BANK1],
+        ret = sys_init(INIT_DEVACCESS, &flash_device_tab[OPT_BANK1],
                                        &flash_device_desc_tab[OPT_BANK1]);
         if (ret != SYS_E_DONE) {
             goto err;
@@ -249,7 +245,7 @@ int flash_device_early_init(t_device_mapping *devmap)
 #if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[OPT_BANK2].name);
 #endif
-        ret = sys_init(INIT_DEVACCESS, (device_t*)&flash_device_tab[OPT_BANK2],
+        ret = sys_init(INIT_DEVACCESS, &flash_device_tab[OPT_BANK2],
                                        &flash_device_desc_tab[OPT_BANK2]);
         if (ret != SYS_E_DONE) {
             goto err;
@@ -437,7 +433,6 @@ uint8_t flash_select_sector(physaddr_t addr)
 		sector = 14;
 	}
 	else if (addr <= FLASH_SECTOR_15_END) {
-        printf("sector 15 selected\n");
 		sector = 15;
 	}
 	else if (addr <= FLASH_SECTOR_16_END) {
@@ -471,7 +466,6 @@ uint8_t flash_select_sector(physaddr_t addr)
 #endif
 	else {
 		log_printf("Error: %x Wrong address case, can't happen.\n", addr);
-		while(1){};
 	}
 	return sector;
 }
@@ -540,7 +534,9 @@ uint8_t flash_sector_erase(physaddr_t addr)
 {
 	uint8_t sector = 255;
 	/* Check that we're looking into the flash */
-	assert(IS_IN_FLASH(addr));
+	if (!(IS_IN_FLASH(addr))) {
+        goto err;
+    }
 
 	/* Check that the BSY bit in the FLASH_SR reg is not set */
 	if(flash_is_busy()){
@@ -598,14 +594,14 @@ void flash_bank_erase(uint8_t bank)
 	/* Check that the BSY bit in the FLASH_SR reg is not set */
 	if(flash_is_busy()){
 		log_printf("Flash busy. Should not happen\n");
-		while(1){};
+        flash_busy_wait();
 	}
 
 	/* Set MER or MER1 bit accordingly */
 	if (bank) {
 #if !(defined(CONFIG_USR_DRV_FLASH_DUAL_BANK)) /*  Dual blank only on f42xxx/43xxx */
 		log_printf("Can't acess bank 2 on a single bank memory!\n");
-		while(1){};
+        goto err;
 #else
 		set_reg(r_CORTEX_M_FLASH_CR, 1, FLASH_CR_MER1);
 #endif
@@ -635,8 +631,8 @@ void flash_mass_erase(void)
 {
 	/* Check that the BSY bit in the FLASH_SR reg is not set */
 	if(flash_is_busy()){
-		log_printf("Flash busy. Should not happen\n");
-		while(1){};
+        log_printf("Flash busy. Should not happen\n");
+        flash_busy_wait();
 	}
 
 	/* Set MER and MER1 bit */
@@ -792,10 +788,12 @@ void flash_read(uint8_t *buffer, physaddr_t addr, uint32_t size)
 {
 	if (!IS_IN_FLASH(addr)) {
 		log_printf("Read not authorized (not in flash memory)\n");
-		while(1){};
+        goto err;
 	}
 	/* Copy data into buffer */
 	memcpy(buffer, (void*)addr, size);
+err:
+    return;
 }
 
 
@@ -927,7 +925,7 @@ void flash_copy_sector(physaddr_t dest, physaddr_t src)
 	uint32_t i = 0, j = 0, k = 0, sector_size = 0;
 	if ((!IS_IN_FLASH(dest)) || (!IS_IN_FLASH(src))) {
 		log_printf("Read not authorized (not in flash memory)\n");
-		while(1){};
+        goto err;
 	}
 	memset(buffer, 0, 64);
 	/* Erase sector */
@@ -955,6 +953,8 @@ void flash_copy_sector(physaddr_t dest, physaddr_t src)
 		} /* j loop */
 	} /* i loop */
 	log_printf("End of copy\n");
+err:
+    return;
 }
 
 
