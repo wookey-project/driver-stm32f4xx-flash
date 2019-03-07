@@ -196,7 +196,7 @@ typedef enum {
  * when you wish to access the device.
  */
 typedef struct {
-#ifdef CONFIG_WOOKEY
+#if CONFIG_WOOKEY
     bool map_flip_shr;
     bool map_flip;
     bool map_flop_shr;
@@ -210,7 +210,7 @@ typedef struct {
 # endif
 #endif
     bool map_ctrl;
-#ifdef CONFIG_WOOKEY
+#if CONFIG_WOOKEY
     bool map_ctrl_2;
 #endif
     bool map_system;

@@ -113,7 +113,7 @@ int flash_device_early_init(t_device_mapping *devmap)
     if (!devmap) {
         return -1;
     }
-#ifdef CONFIG_WOOKEY
+#if CONFIG_WOOKEY
     if (devmap->map_flip_shr) {
 #if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[FLIP_SHR].name);
