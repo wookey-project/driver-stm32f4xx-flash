@@ -8,6 +8,7 @@
 #include "api/libflash.h"
 #include "api/syscall.h"
 #include "api/print.h"
+#include "api/string.h"
 #include "api/regutils.h"
 #include "flash_regs.h"
 
