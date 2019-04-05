@@ -264,6 +264,11 @@ err:
 	return -1;
 }
 
+int flash_init(void)
+{
+    return 0;
+}
+
 static inline int flash_is_busy(void){
 	return !!(read_reg_value(r_CORTEX_M_FLASH_SR) & FLASH_SR_BSY);
 }

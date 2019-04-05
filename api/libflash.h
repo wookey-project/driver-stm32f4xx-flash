@@ -266,6 +266,8 @@ void flash_copy_sector(physaddr_t dest, physaddr_t src);
 
 int flash_device_early_init(t_device_mapping *devmap);
 
+int flash_init(void);
+
 /* return true if the device was previously registered during early init */
 bool flash_is_device_registered(t_flash_dev_id device);
 
