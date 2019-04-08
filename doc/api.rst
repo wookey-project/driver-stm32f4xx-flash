@@ -4,7 +4,7 @@ About The Flash driver API
 Initializing the flash driver
 """""""""""""""""""""""""""""
 
-Initializing the libGUI is done with the following API::
+Initializing the flash driver is done with the following API::
 
    #include "libflash.h"
 
