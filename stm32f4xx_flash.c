@@ -6,11 +6,11 @@
 
 #include "autoconf.h"
 #include "api/libflash.h"
-#include "api/syscall.h"
-#include "api/stdio.h"
-#include "api/nostd.h"
-#include "api/string.h"
-#include "api/regutils.h"
+#include "libc/syscall.h"
+#include "libc/stdio.h"
+#include "libc/nostd.h"
+#include "libc/string.h"
+#include "libc/regutils.h"
 #include "flash_regs.h"
 
 #define FLASH_DEBUG 0

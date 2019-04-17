@@ -2,8 +2,8 @@
 #define _STM32F4XX_FLASH_H
 
 #include "autoconf.h"
-#include "api/regutils.h"
-#include "api/types.h"
+#include "libc/regutils.h"
+#include "libc/types.h"
 
 
 /*

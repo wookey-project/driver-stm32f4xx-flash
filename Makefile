@@ -12,14 +12,10 @@ VERSION = 1
 # use an app-specific build dir
 APP_BUILD_DIR = $(BUILD_DIR)/drivers/$(LIB_NAME)
 
-CFLAGS += -ffreestanding
-CFLAGS += -I$(PROJ_FILES)/include/generated -I$(PROJ_FILES) -I$(PROJ_FILES)/libs/std -I.
+CFLAGS += $(DRIVERS_CFLAGS)
 CFLAGS += -MMD -MP
-CFLAGS += -fno-pie -Os
-CFLAGS += -I.
 CFLAGS += -std=c11
 
-LDFLAGS += -fno-builtin -nostdlib -nostartfiles
 LD_LIBS +=
 
 BUILD_DIR ?= $(PROJ_FILE)build
