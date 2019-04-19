@@ -201,17 +201,18 @@ int flash_device_early_init(t_device_mapping *devmap)
             goto err;
         }
     }
+#if CONFIG_USR_DRV_FLASH_DUAL_BANK
     if (devmap->map_ctrl_2) {
-#if FLASH_DEBUG
+# if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[CTRL2].name);
-#endif
+# endif
         ret = sys_init(INIT_DEVACCESS, &flash_device_tab[CTRL2],
                                        &flash_device_desc_tab[CTRL2]);
         if (ret != SYS_E_DONE) {
             goto err;
         }
     }
-
+#endif
     if (devmap->map_system) {
 #if FLASH_DEBUG
         printf("registering %s\n", flash_device_tab[SYSTEM].name);

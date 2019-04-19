@@ -178,7 +178,9 @@ typedef enum {
 # endif
 #endif
     CTRL,
+#if CONFIG_USR_DRV_FLASH_DUAL_BANK
     CTRL2,
+#endif
     SYSTEM,
     OTP,
     OPT_BANK1,
