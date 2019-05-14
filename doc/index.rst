@@ -1,6 +1,9 @@
 The Flash driver
 ================
 
+.. highlight:: c
+
+
 This library is an implementation of the STM32F4 flash device driver.
 
 It provide an abstraction of the flash device interactions through high level

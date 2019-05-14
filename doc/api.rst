@@ -1,6 +1,9 @@
 About The Flash driver API
 --------------------------
 
+.. highlight:: c
+
+
 Initializing the flash driver
 """""""""""""""""""""""""""""
 
